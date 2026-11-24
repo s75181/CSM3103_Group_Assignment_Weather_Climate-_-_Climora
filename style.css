@@ -1,0 +1,375 @@
+/* ==========================================
+   1. BASE & RESET STYLES
+   ========================================== */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: var(--bg-gradient);
+  color: var(--text-main);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ==========================================
+   2. CORE THEME VARIABLES (Default Blue)
+   ========================================== */
+:root {
+  --bg-gradient: linear-gradient(135deg, #5b8cd6, #4683ae, #78867d);
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --box-bg: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --btn-bg: #0f766e;
+  --btn-text: white;
+}
+
+body.dark-theme {
+  --bg-gradient: linear-gradient(135deg, #20376b, #1e293b, #300837, #0c111d);
+  --card-bg: rgba(30, 41, 59, 0.95);
+  --box-bg: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #475569;
+  --btn-bg: #38bdf8;
+  --btn-text: #0f172a;
+}
+
+/* ==========================================
+    WEATHER OVERRIDES (Only active if data-weather exists)
+   ========================================== */
+/* Light Mode Weather */
+body[data-weather="rain"] {
+  --bg-gradient: linear-gradient(135deg, #b4daf4, #5697ba); 
+  --card-bg: rgba(224, 242, 254, 0.95);
+  --box-bg: #7dd3fc;
+  --text-main: #0c4a6e;
+}
+body[data-weather="sunny"] {
+  --bg-gradient: linear-gradient(135deg, #dcd3b2, #fde68a);
+  --card-bg: rgba(255, 251, 235, 0.95);
+  --box-bg: #fcd34d;
+  --text-main: #78350f;
+}
+body[data-weather="cloudy"] {
+  --bg-gradient: linear-gradient(135deg, #f8fafc, #e2e8f0); 
+  --card-bg: rgba(248, 250, 252, 0.95);
+  --box-bg: #cbd5e1;
+  --text-main: #334155;
+}
+
+/* Dark Mode Weather */
+body.dark-theme[data-weather="rain"] {
+  --bg-gradient: linear-gradient(135deg, #082f49, #0c4a6e); 
+  --card-bg: rgba(8, 47, 73, 0.95);
+  --box-bg: #075985;
+  --text-main: #e0f2fe;
+}
+body.dark-theme[data-weather="sunny"] {
+  --bg-gradient: linear-gradient(135deg, #451a03, #78350f); 
+  --card-bg: rgba(69, 26, 3, 0.95);
+  --box-bg: #92400e;
+  --text-main: #fef3c7;
+}
+body.dark-theme[data-weather="cloudy"] {
+  --bg-gradient: linear-gradient(135deg, #0f172a, #1e293b); 
+  --card-bg: rgba(15, 23, 42, 0.95);
+  --box-bg: #334155;
+  --text-main: #f1f5f9;
+}
+
+/* ==========================================
+   APP HEADER (FLOATING CONTAINER / SMART HIDE)
+   ========================================== */
+.smart-header {
+  position: fixed;
+  /* Pushes the container safely below the phone's status bar */
+  top: calc(env(safe-area-inset-top, 15px) + 10px); 
+  left: 50%;
+  transform: translateX(-50%);
+  
+  /* Matches your bottom nav bar exactly! */
+  width: 92%; 
+  max-width: 400px; 
+  
+  z-index: 1000;
+  background: var(--bg-gradient); /* Or your glassmorphism code */
+  
+  padding: 15px 0 12px;
+  text-align: center;
+  
+  /* Fully rounded corners on all sides so it looks like a container */
+  border-radius: 24px; 
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+/* Slides the container completely off the screen when scrolling down */
+.smart-header.hide-up {
+  transform: translate(-50%, -200%); 
+}
+
+.smart-header .header-logo {
+  width: 250px; 
+  text-align: left;
+  max-width: 90%; /* Pastikan logo tak cecah hujung skrin */
+  height: auto;
+  border: none;
+  box-shadow: none; 
+  background: transparent;
+}
+
+.smart-header p {
+  font-size: 12px;
+  margin: 5px 0 0;
+  color: white;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* ==========================================
+   3. APP LAYOUT & PAGES
+   ========================================== */
+.app {
+  max-width: 430px;
+  margin: auto;
+  min-height: 100vh;
+  /* Changed the top padding to 110px to make room for the floating header */
+  padding: 110px 20px 120px; 
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.app.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page {
+  display: none;
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  animation: fade 0.25s ease-in-out;
+  color: var(--text-main);
+}
+.page.active { 
+  display: block; 
+}
+
+.grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 12px; 
+  margin-top: 22px; 
+}
+
+.grid div, .list p, .alert, .card-content, .feed-item {
+  background: var(--box-bg); 
+  padding: 15px; 
+  border-radius: 16px; 
+  border: 1px solid var(--border-color);
+}
+
+/* ==========================================
+   4. UI COMPONENTS (Buttons, Inputs, Toggles)
+   ========================================== */
+button {
+  cursor: pointer; 
+  width: 100%; 
+  padding: 14px; 
+  margin-top: 15px;
+  border: none; 
+  border-radius: 16px; 
+  background: var(--btn-bg);
+  color: var(--btn-text); 
+  font-size: 15px; 
+  font-weight: bold; 
+  transition: opacity 0.2s;
+}
+button:hover { opacity: 0.9; }
+
+.back-btn { 
+  width: auto; 
+  padding: 6px 14px; 
+  margin-bottom: 15px; 
+  background: var(--text-muted); 
+  font-size: 13px; 
+  color: white;
+}
+
+label { 
+  font-size: 13px; 
+  color: var(--text-muted); 
+  font-weight: 600; 
+  display: block; 
+  margin-top: 10px;
+}
+
+input[type="text"], input[type="password"], input[type="email"], input[type="tel"], select {
+  width: 100%; 
+  padding: 13px; 
+  margin: 8px 0 10px;
+  border: 1px solid var(--border-color); 
+  border-radius: 14px;
+  background: var(--box-bg); 
+  color: var(--text-main); 
+  font-size: 15px;
+}
+
+input[type="file"] { 
+  width: 100%; 
+  background: var(--box-bg); 
+  padding: 14px; 
+  border-radius: 16px; 
+  color: var(--text-main); 
+}
+
+textarea { 
+  width: 100%; 
+  height: 80px; 
+  margin-top: 15px; 
+  padding: 15px; 
+  border-radius: 16px; 
+  border: 1px solid var(--border-color); 
+  resize: none; 
+  background: var(--box-bg); 
+  color: var(--text-main); 
+}
+
+/* Sliding Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .3s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+input:checked + .slider { background-color: #0284c7; }
+input:checked + .slider:before { transform: translateX(22px); }
+
+/* ==========================================
+   5. SPECIFIC SECTIONS (Header, Nav, Map, Alerts)
+   ========================================== */
+header { color: white; margin-bottom: 20px; }
+header h1 { font-size: 38px; margin: 0; }
+header p { margin-top: 5px; opacity: 0.9; }
+
+.header-centered {
+  text-align: center;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.header-logo { width: 250px; height: auto; border: none; box-shadow: none; background: linear-gradient(135deg, #20376b, #1f523c, #78a186, #1e2c4d); }
+.header-centered p { margin-top: 10px; color: white; opacity: 3.0; font-size: 12px; }
+
+/* Login Page Alignment */
+.login-centered {
+  flex-direction: column; align-items: center; text-align: center; margin-top: 10vh;
+}
+.page.login-centered.active { display: flex; }
+.login-centered .form-group { width: 100%; text-align: left; }
+.login-centered h2 { margin-bottom: 5px; }
+.login-centered p { color: var(--text-muted); margin-bottom: 25px; }
+
+.app-logo {
+  width: 140px; height: auto; margin-bottom: 15px; border-radius: 24px;
+  background: linear-gradient(135deg, #074d6b, #386765, #0f766e );
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Weather & Lists */
+.weather-card { background: transparent; border-radius: 22px; padding: 10px 0; }
+#temperature { font-size: 52px; margin: 10px 0 5px; }
+#weather { font-size: 16px; line-height: 1.4; color: var(--text-muted); }
+
+.grid b { display: block; font-size: 14px; }
+.grid span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+
+.list p { margin: 10px 0; cursor: pointer; font-weight: 500; transition: transform 0.2s; }
+.list p:hover { transform: translateX(4px); }
+
+.alert { margin-bottom: 12px; border-left: 5px solid #f97316; }
+
+/* Map & Media */
+#mapArea { height: 300px; border-radius: 20px; overflow: hidden; margin: 15px 0; border: 1px solid var(--border-color); z-index: 1;}
+#photoPreview { display: none; width: 100%; margin-top: 15px; border-radius: 18px; max-height: 220px; object-fit: cover; }
+
+/* Feed Styles */
+.feed-item { margin-bottom: 15px; }
+.feed-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px;}
+.feed-user { font-weight: bold; color: var(--text-main); }
+.feed-img { width: 100%; border-radius: 12px; margin-top: 10px; }
+
+/* Bottom Navigation */
+nav {
+  position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+  max-width: 430px; width: 92%; background: var(--card-bg); border-radius: 24px;
+  padding: 10px; display: flex; justify-content: space-around;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 999;
+}
+nav button { background: none; border: none; font-size: 20px; color: var(--text-muted); margin-top: 0; padding: 5px;}
+nav span { display: block; font-size: 10px; margin-top: 3px; color: var(--text-main); }
+
+/* ==========================================
+   6. LOADERS & ANIMATIONS
+   ========================================== */
+.loader-container {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: linear-gradient(135deg, #38bdf8, #0f766e);
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  z-index: 9999; color: white;
+  transition: opacity 0.5s ease, visibility 0.5s;
+}
+.spinner {
+  width: 50px; height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.3); border-top-color: white; border-radius: 50%;
+  animation: spin 1s linear infinite; margin-bottom: 15px;
+}
+.loader-container.hidden { opacity: 0; visibility: hidden; }
+
+/* About Page Team Profiles */
+#teamGrid b {
+  font-size: 15px;
+  color: var(--text-main);
+}
+#teamGrid small {
+  font-size: 12px;
+}
+/* This ensures the image circles look good in both themes */
+.profile-img {
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

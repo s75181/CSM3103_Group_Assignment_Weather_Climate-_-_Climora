@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Climora Weather</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- LOADING SCREEN -->
+  <div id="loader" class="loader-container">
+    <div class="spinner"></div>
+    <p>Loading Climora...</p>
+  </div>
+
+  <div class="app" id="appContainer">
+    <header id="mainHeader" class="smart-header">
+      <img src="climora_header_logo.png" alt="Climora Header Logo" class="header-logo" />
+    </header>
+
+    <main>
+      <!-- PAGE 1: LOGIN -->
+      <section id="login" class="page login-centered">
+        <img src="climora_login_logo.png" alt="Climora Logo" class="app-logo" />
+        
+        <h2>Welcome to Climora</h2>
+        <p>Please log in to continue.</p>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="loginUsername" placeholder="Enter username" />
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="Enter password" />
+        </div>
+        <button onclick="performLogin()">Log In</button>
+       </section>
+
+      <section id="home" class="page">
+        <h3 id="welcomeMessage" style="margin-top: 0; color: #0f766e;"></h3>
+        <div class="weather-card">
+          <label for="stateSelect">State</label>
+          <select id="stateSelect" onchange="loadDistrictDropdown()">
+            <option value="">Select State</option>
+          </select>
+
+          <label for="districtSelect">District</label>
+          <select id="districtSelect" onchange="loadSubDistrictDropdown()">
+              <option value="">Select District</option>
+          </select>
+
+          <label for="subDistrictSelect">Sub-District / Area</label>
+          <select id="subDistrictSelect" onchange="changeWeatherLocation()">
+              <option value="">Select Area</option>
+          </select>
+          
+          <p id="location">Loading location...</p>
+          <h2 id="temperature">--°C</h2>
+          <p id="weather">Loading forecast...</p>
+
+          <div class="grid">
+            <div><b id="morning">--</b><span>🌄 Morning</span></div>
+            <div><b id="afternoon">--</b><span>☀️ Afternoon</span></div>
+            <div><b id="night">--</b><span>🌙 Night</span></div>
+            <div><b id="summary">--</b><span>🌡️ Min Temp</span></div>
+          </div>
+
+          <button onclick="saveLocation()" style="margin-top: 20px; background: #0ea5e9;">📍 Save This Location</button>
+          
+        </div>
+      </section>
+
+      <!-- PAGE 3: FORECAST -->
+      <section id="forecast" class="page">
+        <h2>Malaysia Forecast</h2>
+        <div id="forecastList" class="list">
+          <p>Loading Data.gov.my forecast...</p>
+        </div>
+      </section>
+
+      <!-- PAGE 4: MAP & SHELTERS -->
+      <section id="map" class="page">
+        <h2>Interactive Map</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <button onclick="initOrRefreshMap('weather')" style="margin-top: 0;">🌦 Weather</button>
+          <button onclick="initOrRefreshMap('shelters')" style="margin-top: 0; background: #eab308;">⛺ Shelters</button>
+        </div>
+        <div id="mapArea"></div>
+        <button onclick="saveLocation()">📍 Save Current Location</button>
+      </section>
+
+      <!-- PAGE 5: SOCIAL REPORT FEED -->
+      <section id="report" class="page">
+        <h2>Community Reports</h2>
+        
+        <!-- Post creation -->
+        <div class="report-box">
+          <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="previewPhoto()" />
+          <img id="photoPreview" alt="Preview" />
+          <textarea id="reportText" placeholder="Report a flood, storm, or clear skies..."></textarea>
+          <button onclick="submitReport()">Post Report</button>
+        </div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #cbd5e1;">
+
+        <!-- Feed List -->
+        <div id="socialFeed">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- PAGE 6: ALERTS -->
+      <section id="alerts" class="page">
+        <h2>Weather Alerts</h2>
+        <p style="font-size: 12px; color: #64748b;">Based on your notification preferences</p>
+        <div id="alertList">
+          <div class="alert">Loading weather warnings...</div>
+        </div>
+      </section>
+
+      <!-- PAGE 7: MORE MENU -->
+      <section id="more" class="page">
+        <h2>More Features</h2>
+        <div class="list">
+          <p onclick="showPage('profile')">👤 My Profile</p>
+          <p onclick="showPage('settings')">⚙️ App Settings</p>
+          <p onclick="showPage('tips')">🌱 Eco Tips</p>
+          <p onclick="showPage('locations')">📍 Saved Weather Locations</p>
+          
+          <!-- DROPDOWN SHELTER -->
+          <div style="background: transparent; border: none; padding: 5px 0; margin: 10px 0;">
+            <label for="moreShelterSelect" style="color: var(--text-main); font-size: 14px;">🏥 Emergency Shelters</label>
+            <select id="moreShelterSelect" onchange="navigateToShelter()" style="margin-bottom: 0;">
+              <option value="">-- Choose View & Go --</option>
+              <option value="all">📋 All Shelters Directory</option>
+              <option value="saved">📌 My Saved Shelters</option>
+            </select>
+          </div>
+
+          <p onclick="showPage('feedback')">💬 Send Feedback</p>
+          <p onclick="showPage('about')">ℹ️ About Climora</p>
+          <p onclick="performLogout()" style="color: #ef4444;">🚪 Log Out</p>
+        </div>
+      </section>
+
+      <!-- PAGE 8: PROFILE -->
+      <section id="profile" class="page">
+        <h2>👤 My Profile</h2>
+        <button class="back-btn" onclick="showPage('more')">⬅️ Back</button>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="profileName" value="User" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="profileEmail" value="user@climora.app" />
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="profilePhone" value="+60" />
+        </div>
+        <button onclick="saveProfile()">Save Changes</button>
+      </section>
+
+      <!-- PAGE 9: SETTINGS -->
+      <section id="settings" class="page">
+        <h2>⚙️ App Settings</h2>
+        <button class="back-btn" onclick="showPage('more')">⬅️ Back</button>
+
+        <div class="card-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: var(--box-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color);">
+            <span style="font-weight: 500; color: var(--text-main);">🌙 Enable Dark Mode</span>
+            <label class="switch">
+              <input type="checkbox" id="darkModeToggle" onchange="updateTheme()">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group" style="background: var(--box-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color);">
+            <label for="themeModeSelect" style="display: block; margin-bottom: 8px; font-weight: 500;">🎨 Theme Style</label>
+            <select id="themeModeSelect" onchange="updateTheme()" style="width: 100%; padding: 10px; border-radius: 8px;">
+              <option value="default">☀️ Default Theme</option>
+              <option value="dynamic">🌦 Dynamic Weather Theme</option>
+            </select>
+            <small style="color: var(--text-muted); display: block; margin-top: 5px;">Default keeps the app in light mode unless you enable dark mode manually. Dynamic mode follows the forecast automatically.</small>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 10: SHELTER DYNAMIC PAGE -->
+      <section id="shelterList" class="page">
+        <h2 id="shelterPageTitle">🏥 Shelters</h2>
+        <button class="back-btn" onclick="showPage('more')">⬅️ Back</button>
+        
+        <div class="card-content" id="shelterDynamicList">
+          <!-- list will change automatically here -->
+        </div>
+      </section>
+
+      <!-- PAGE 11: FEEDBACK -->
+      <section id="feedback" class="page">
+        <h2>📝 Send Feedback</h2>
+        <button class="back-btn" onclick="showPage('more')">⬅️ Back</button>
+
+        <div class="card-content" id="feedbackFormArea">
+          <p style="color: var(--text-muted); font-size: 14px;">We love hearing from you! Tell us how we can improve Climora.</p>
+          
+          <textarea id="feedbackText" placeholder="Your suggestions or bug reports..."></textarea>
+          
+          <button onclick="submitFeedback()" style="margin-top: 15px;">🚀 Send Feedback</button>
+        </div>
+
+        <div id="thankYouMessage" style="display: none; text-align: center; padding: 40px 20px;">
+          <div style="font-size: 60px; margin-bottom: 15px;">🎉</div>
+          <h3 style="color: var(--text-main);">Thank you!</h3>
+          <p style="color: var(--text-muted);">Your feedback has been received. We appreciate your help in making Climora better.</p>
+          <button onclick="resetFeedbackForm()" style="background: var(--text-muted);">Send Another</button>
+        </div>
+      </section>
+
+      <!-- PAGE 12: SMART ECO TIPS -->
+      <section id="tips" class="page">
+        <h2>🌱 Smart Eco Tips</h2>
+        <button class="back-btn" onclick="showPage('more')">⬅️ Back</button>
+
+        <div class="card-content" style="text-align: center; padding: 30px 20px;">
+          <div id="smartTipIcon" style="font-size: 60px; margin-bottom: 15px;">🌍</div>
+          
+          <h3 id="smartTipContext" style="color: var(--text-main); margin-bottom: 15px;">Loading smart tips...</h3>
+          
+          <div style="background: var(--box-bg); padding: 20px; border-left: 5px solid var(--btn-bg); border-radius: 12px; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p id="smartTipText" style="font-size: 15px; color: var(--text-muted); line-height: 1.6; margin: 0;">
+              Analysing current weather data to give you the best eco-friendly advice...
+            </p>
+          </div>
+
+          <button onclick="updateSmartTips()" style="margin-top: 25px; border-radius: 25px; padding: 12px 25px;">
+            🎲 Give Me Another Tip
+          </button>
+        </div>
+      </section>
+
+      <!-- PAGE 13: SAVED LOCATIONS -->
+      <section id="locations" class="page">
+        <h2>📍 Saved Locations</h2>
+        <button class="back-btn" onclick="showPage('more')">⬅️ Back</button>
+        
+        <div class="card-content">
+          <div id="savedLocationsList">
+            <p style="text-align: center;">No locations saved yet.</p>
+          </div>
+
+          <button onclick="clearSavedLocation()" style="background: #ef4444; margin-top: 15px;">Clear All Saved Data</button>
+        </div>
+      </section>
+
+     <!-- PAGE 14: ABOUT -->
+    <section id="about" class="page">
+      <h2>ℹ️ About Climora</h2>
+      <button class="back-btn" onclick="showPage('more')">⬅️ Back</button>
+
+      <div class="card-content">
+        <h3>What is Climora?</h3>
+        <p style="color: var(--text-muted); line-height: 1.6;">
+          Climora is a smart mobile solution powered by <b>Data.gov.my</b>. We bridge the gap between raw government meteorological data and actionable, eco-friendly living habits. Our mission is to empower students and the public to stay prepared for weather changes while maintaining sustainable lifestyles.
+        </p>
+
+        <h3 style="margin-top: 30px;">Meet Our Team</h3>
+        <div id="teamGrid" style="display: grid; gap: 15px; margin-top: 15px;">
+          
+          <!-- Nurdayana -->
+          <div style="background: var(--box-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 55px; height: 55px; border-radius: 50%; background-color: #ccc; background-image: url('dayana.png'); background-size: cover; background-position: center;"></div>
+            <div>
+              <b style="display: block;">Nurdayana Batrisya</b>
+              <small style="display: block; color: var(--btn-bg);">Lead Developer</small>
+              <a href="mailto:S76272@ocean.umt.edu.my" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📧 S76272@ocean.umt.edu.my</a>
+              <a href="tel:+601131285506" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📞 +6011-31285506</a>
+            </div>
+          </div>
+
+          <!-- Hani -->
+          <div style="background: var(--box-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 55px; height: 55px; border-radius: 50%; background-color: #ccc; background-image: url('aifa.jpg'); background-size: cover; background-position: center;"></div>
+            <div>
+              <b style="display: block;">Nur Hani Adriana</b>
+              <small style="display: block; color: var(--btn-bg);">UI/UX Designer</small>
+              <a href="mailto:S12345@ocean.umt.edu.my" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📧 S12345@ocean.umt.edu.my</a>
+              <a href="tel:+601174839784" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📞 +6011-74839784</a>
+            </div>
+          </div>
+
+          <!-- Hanis -->
+          <div style="background: var(--box-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 55px; height: 55px; border-radius: 50%; background-color: #ccc; background-image: url('aifa.jpg'); background-size: cover; background-position: center;"></div>
+            <div>
+              <b style="display: block;">Nour Hanis Nabilah</b>
+              <small style="display: block; color: var(--btn-bg);">Backend Engineer</small>
+              <a href="mailto:S12345@ocean.umt.edu.my" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📧 S12345@ocean.umt.edu.my</a>
+              <a href="tel:+601157695141" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📞 +6011-57695141</a>
+            </div>
+          </div>
+
+          <!-- Thiru -->
+          <div style="background: var(--box-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 55px; height: 55px; border-radius: 50%; background-color: #ccc; background-image: url('thiru.heic'); background-size: cover; background-position: center;"></div>
+            <div>
+              <b style="display: block;">Thiru Vaithini</b>
+              <small style="display: block; color: var(--btn-bg);">Data Analyst</small>
+              <a href="mailto:S12345@ocean.umt.edu.my" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📧 S12345@ocean.umt.edu.my</a>
+              <a href="tel:+60179696921" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📞 +6017-9696921</a>
+            </div>
+          </div>
+
+          <!-- Aifa -->
+          <div style="background: var(--box-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 55px; height: 55px; border-radius: 50%; background-color: #ccc; background-image: url('aifa.jpg'); background-size: cover; background-position: center;"></div>
+            <div>
+              <b style="display: block;">Nurul Aifa</b>
+              <small style="display: block; color: var(--btn-bg);">QA Tester</small>
+              <a href="mailto:S12345@ocean.umt.edu.my" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📧 S12345@ocean.umt.edu.my</a>
+              <a href="tel:+60133668424" style="display: block; color: var(--text-muted); text-decoration: none; font-size: 12px;">📞 +6013-3668424</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    </main>
+
+    <nav id="bottomNav" style="display: none;">
+      <button onclick="showPage('home')">🏠<span>Home</span></button>
+      <button onclick="showPage('forecast')">🌦<span>Forecast</span></button>
+      <button onclick="showPage('map')">🗺<span>Map</span></button>
+      <button onclick="showPage('report')">💬<span>Report</span></button>
+      <button onclick="showPage('alerts')">⚠️<span>Alerts</span></button>
+      <button onclick="showPage('more')">☰<span>More</span></button>
+    </nav>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
